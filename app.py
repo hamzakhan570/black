@@ -1,35 +1,3 @@
-                parts.append(" | ".join(cell.text.strip() for cell in row.cells))
-        text = "\n".join(parts)
-    elif filename.endswith(".txt"):
-        text = uploaded_file.getvalue().decode("utf-8", errors="replace")
-    else:
-        raise ValueError("Unsupported file type. Upload a PDF, DOCX, or TXT file.")
-
-    text = re.sub(r"\n{3,}", "\n\n", text).strip()
-    if not text:
-        raise ValueError(
-            "No readable text was found. If this is a scanned PDF, run OCR on it and upload the searchable PDF."
-        )
-    return text
-
-
-def get_api_key() -> str | None:
-    """Read the key from Streamlit secrets first, then environment variables."""
-    try:
-        key = st.secrets.get("GEMINI_API_KEY", "")
-    except Exception:
-        key = ""
-    return key or os.getenv("GEMINI_API_KEY")
-
-
-def analyze_resume(resume_text: str, job_description: str, api_key: str) -> dict[str, Any]:
-    client = genai.Client(api_key=api_key)
-    prompt = f"""
-You are a careful resume reviewer. Analyze the resume against the job description, if one is provided.
-Return ONLY valid JSON with these keys:
-- ats_score: integer from 0 to 100
-- score_explanation: short string explaining that this is an estimate
-- strengths: array of 3 to 6 concise strings
 - improvements: array of 4 to 8 actionable strings
 - missing_keywords: array of relevant keywords or skills not clearly evidenced in the resume
 - formatting_checks: array of concise observations about ATS readability, sections, dates, and layout
@@ -50,7 +18,7 @@ JOB DESCRIPTION:
 {job_description[:12000] if job_description.strip() else "Not provided."}
 """
     response = client.models.generate_content(
-        model="gemini-3.5-flash",
+        model="gemini-2.5-flash",
         contents=prompt,
         config={"response_mime_type": "application/json"},
     )
